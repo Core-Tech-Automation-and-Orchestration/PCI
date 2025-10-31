@@ -30,11 +30,11 @@ jobs:
           git clone --branch ${{ vars.CURRENT_BRANCH }} \
           ${{ vars.CODECOMMIT_REPO }}
 
-      - name: Set up JDK 1.8.0_121
+      - name: Set up JDK 8
         uses: actions/setup-java@v4
         with:
-          distribution: 'adopt'
-          java-version: '8.0.121'
+          distribution: 'temurin'
+          java-version: '8'
 
       - name: Install Maven 3.0
         run: |
