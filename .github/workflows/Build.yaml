@@ -39,8 +39,13 @@ jobs:
       - name: Install Maven 3.0
         run: |
           MAVEN_VERSION=3.0
-          curl -sL https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz | tar xz
-          echo "$PWD/apache-maven-${MAVEN_VERSION}/bin" >> $GITHUB_PATH
+          wget https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz
+          tar -xzf apache-maven-${MAVEN_VERSION}-bin.tar.gz
+          sudo mv apache-maven-${MAVEN_VERSION} /opt/maven
+          echo "export M2_HOME=/opt/maven" | sudo tee /etc/profile.d/maven.sh
+          echo "export PATH=\$M2_HOME/bin:\$PATH" | sudo tee -a /etc/profile.d/maven.sh
+          source /etc/profile.d/maven.sh
+          /opt/maven/bin/mvn -version
 
       - name: Install createrepo-c
         run: |
@@ -58,7 +63,7 @@ jobs:
       - name: Build with Maven (all modules)
         run: |
           echo "Using MAVEN_OPTS=${MAVEN_OPTS}"
-          mvn clean install ${MAVEN_ARGS}
+          /opt/maven/bin/mvn clean install ${MAVEN_ARGS}
 
       - name: Verify RPM outputs
         run: |
