@@ -39,7 +39,7 @@ jobs:
       - name: Install Maven 3.0
         run: |
           MAVEN_VERSION=3.0
-          wget https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz
+          wget https://archive.apache.org/dist/maven/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz
           tar -xzf apache-maven-${MAVEN_VERSION}-bin.tar.gz
           sudo mv apache-maven-${MAVEN_VERSION} /opt/maven
           echo "export M2_HOME=/opt/maven" | sudo tee /etc/profile.d/maven.sh
