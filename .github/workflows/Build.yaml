@@ -41,42 +41,43 @@ jobs:
           echo "list files"
           ls -ltra
 
-      # - name: Set up JDK 8
-      #   uses: actions/setup-java@v4
-      #   with:
-      #     distribution: 'temurin'
-      #     java-version: '8'
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '8'
 
-      # - name: Install Maven 3.0
-      #   run: |
-      #     MAVEN_VERSION=3.0
-      #     wget https://archive.apache.org/dist/maven/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz
-      #     tar -xzf apache-maven-${MAVEN_VERSION}-bin.tar.gz
-      #     sudo mv apache-maven-${MAVEN_VERSION} /opt/maven
-      #     echo "export M2_HOME=/opt/maven" | sudo tee /etc/profile.d/maven.sh
-      #     echo "export PATH=\$M2_HOME/bin:\$PATH" | sudo tee -a /etc/profile.d/maven.sh
-      #     source /etc/profile.d/maven.sh
-      #     /opt/maven/bin/mvn -version
+      - name: Install Maven 3.0
+        run: |
+          MAVEN_VERSION=3.0
+          wget https://archive.apache.org/dist/maven/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz
+          tar -xzf apache-maven-${MAVEN_VERSION}-bin.tar.gz
+          sudo mv apache-maven-${MAVEN_VERSION} /opt/maven
+          echo "export M2_HOME=/opt/maven" | sudo tee /etc/profile.d/maven.sh
+          echo "export PATH=\$M2_HOME/bin:\$PATH" | sudo tee -a /etc/profile.d/maven.sh
+          source /etc/profile.d/maven.sh
+          /opt/maven/bin/mvn -version
 
-      # - name: Install createrepo-c
-      #   run: |
-      #     sudo apt-get install -y createrepo-c
-      #     command -v createrepo_c || echo "createrepo_c not installed"
+      - name: Install createrepo-c
+        run: |
+          sudo apt-get install -y createrepo-c
+          command -v createrepo_c || echo "createrepo_c not installed"
 
-      # - name: Cache Maven dependencies
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: ~/.m2/repository
-      #     key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-maven-
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
 
-      # - name: Build with Maven (all modules)
-      #   run: |
-      #     echo "Using MAVEN_OPTS=${MAVEN_OPTS}"
-      #     /opt/maven/bin/mvn clean install ${MAVEN_ARGS}
+      - name: Build with Maven (all modules)
+        run: |
+          echo "Using MAVEN_OPTS=${MAVEN_OPTS}"
+          cd cws-ecomm-pci
+          /opt/maven/bin/mvn clean install ${MAVEN_ARGS}
 
-      # - name: Verify RPM outputs
-      #   run: |
-      #     echo "Checking for RPMs..."
-      #     ls -l GreenZone-builder/target/rpm/cup-ecomm-greenzone/RPMS/noarch/ || echo "No RPMs found."
+      - name: Verify RPM outputs
+        run: |
+          echo "Checking for RPMs..."
+          ls -l GreenZone-builder/target/rpm/cup-ecomm-greenzone/RPMS/noarch/ || echo "No RPMs found."
