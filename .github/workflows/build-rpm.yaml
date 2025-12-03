@@ -21,7 +21,7 @@ env:
   AWS_REGION: "eu-west-1"
 
 jobs:
-  run-task:
+  pci-build-package:
     runs-on: ubuntu-latest
 
     steps:
