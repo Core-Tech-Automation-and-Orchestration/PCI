@@ -33,7 +33,7 @@
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "/ecs/${FAMILY_NAME}",
-          "awslogs-region": "${AWS_DEFAULT_REGION}",
+          "awslogs-region": "${AWS_REGION}",
           "awslogs-stream-prefix": "ecs",
           "awslogs-create-group": "true"
         }

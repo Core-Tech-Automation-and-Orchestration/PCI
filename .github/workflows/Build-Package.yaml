@@ -14,25 +14,24 @@ env:
   CODECOMMIT_BRANCH: "25.0.03"
   S3_RPM_REPO: "pci-rpm-repo"
   CODECOMMIT_REPO: "ssh://git-codecommit.eu-west-1.amazonaws.com/v1/repos/cws-ecomm-pci"
-  AWS_DEFAULT_REGION: "eu-west-1"
+  AWS_REGION: "eu-west-1"
 
 jobs:
   run-task:
     runs-on: ubuntu-latest
 
     steps:
-    # Step 1: Checkout repo
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    # Step 2: Assume IAM Role
-    - name: Configure AWS credentials
+    - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ secrets.IAM_ROLE }}
-        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+        role-session-name: assume-role-test
+        aws-region: ${{ secrets.AWS_REGION }}
+        output-credentials: true
 
-    # Step 3: Edit JSON dynamically
     - name: Render ECS task JSON
       run: |
         envsubst < task-template.json > task.json
