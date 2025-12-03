@@ -53,12 +53,38 @@ jobs:
         echo "Registered Task Definition ARN: $TASK_DEF_ARN"
         echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
 
-    # - name: Run ECS Task
-    #   run: |
-    #     echo "Running ECS task..."
-    #     aws ecs run-task \
-    #       --cluster pci-cluster \
-    #       --launch-type FARGATE \
-    #       --network-configuration "awsvpcConfiguration={subnets=[subnet-xxxxxx],securityGroups=[sg-xxxxxx],assignPublicIp=ENABLED}" \
-    #       --task-definition ${{ env.TASK_DEF_ARN }} \
-    #       --region ${{ env.AWS_REGION }}
+    - name: Run ECS Task
+      id: run_ecs
+      run: |
+        echo "Running ECS task..."
+        TASK_ARN=$(aws ecs run-task \
+          --cluster pci-cluster \
+          --launch-type FARGATE \
+          --network-configuration "awsvpcConfiguration={subnets=[subnet-0de8cd67df55d4b48],securityGroups=[sg-01a35b962c565a63b],assignPublicIp=ENABLED}" \
+          --task-definition ${{ env.TASK_DEF_ARN }} \
+          --region ${{ env.AWS_REGION }} \
+          --query 'tasks[0].taskArn' \
+          --output text)
+        echo "TASK_ARN=$TASK_ARN" >> $GITHUB_ENV
+
+    - name: Wait for ECS Task to Finish
+      run: |
+        echo "Waiting for ECS task to finish..."
+        aws ecs wait tasks-stopped \
+          --cluster pci-cluster \
+          --tasks ${{ env.TASK_ARN }} \
+          --region ${{ env.AWS_REGION }}
+
+    - name: Check Task Exit Code
+      run: |
+        EXIT_CODE=$(aws ecs describe-tasks \
+          --cluster pci-cluster \
+          --tasks ${{ env.TASK_ARN }} \
+          --region ${{ env.AWS_REGION }} \
+          --query 'tasks[0].containers[0].exitCode' \
+          --output text)
+        echo "Task Exit Code: $EXIT_CODE"
+        if [ "$EXIT_CODE" -ne 0 ]; then
+          echo "Task failed!"
+          exit 1
+        fi
