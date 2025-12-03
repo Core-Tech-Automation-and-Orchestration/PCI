@@ -9,16 +9,16 @@ permissions:
   id-token: write
 
 env:
-  FAMILY_NAME: "pci-task"
-  CONTAINER_NAME: "pci-image"
-  ECS_EXEC_ROLE_ARN: "arn:aws:iam::329292974512:role/ecsTaskExecutionRole"
-  ECS_TASK_ROLE_ARN: "arn:aws:iam::329292974512:role/jenkins-task-role-BNR"
-  ECS_IMAGE: "329292974512.dkr.ecr.eu-west-1.amazonaws.com/pci-image:latest"
+  FAMILY_NAME: ${{ env.TASK_DEF_NAME }}
+  CONTAINER_NAME: ${{ env.CONTAINER_NAME }}
+  ECS_EXEC_ROLE_ARN: ${{ secrets.ECS_EXEC_ROLE_ARN }}
+  ECS_TASK_ROLE_ARN: ${{ secrets.ECS_TASK_ROLE_ARN }}
+  ECS_IMAGE: ${{ secrets.CODECOMMIT_BRANCH }}
   BUILD_NUMBER: ${{ github.run_number }}
-  CODECOMMIT_BRANCH: "25.0.03"
-  S3_RPM_REPO: "pci-rpm-repo"
-  CODECOMMIT_REPO: "ssh://git-codecommit.eu-west-1.amazonaws.com/v1/repos/cws-ecomm-pci"
-  AWS_REGION: "eu-west-1"
+  CODECOMMIT_BRANCH: ${{ env.CODECOMMIT_BRANCH }}
+  S3_RPM_REPO: ${{ env.S3_RPM_REPO }}
+  CODECOMMIT_REPO: ${{ env.CODECOMMIT_REPO }}
+  AWS_REGION: ${{ env.AWS_REGION }}
 
 jobs:
   pci-build-package:
