@@ -41,3 +41,24 @@ jobs:
         envsubst < task-template.json > task.json
         echo "Rendered task.json:"
         cat task.json
+
+    - name: Register ECS Task Definition
+      run: |
+        echo "Registering ECS Task Definition..."
+        TASK_DEF_ARN=$(aws ecs register-task-definition \
+          --cli-input-json file://task.json \
+          --region ${{ env.AWS_REGION }} \
+          --query 'taskDefinition.taskDefinitionArn' \
+          --output text)
+        echo "Registered Task Definition ARN: $TASK_DEF_ARN"
+        echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
+
+    # - name: Run ECS Task
+    #   run: |
+    #     echo "Running ECS task..."
+    #     aws ecs run-task \
+    #       --cluster pci-cluster \
+    #       --launch-type FARGATE \
+    #       --network-configuration "awsvpcConfiguration={subnets=[subnet-xxxxxx],securityGroups=[sg-xxxxxx],assignPublicIp=ENABLED}" \
+    #       --task-definition ${{ env.TASK_DEF_ARN }} \
+    #       --region ${{ env.AWS_REGION }}
