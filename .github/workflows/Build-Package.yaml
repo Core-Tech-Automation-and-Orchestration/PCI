@@ -1,0 +1,40 @@
+name: Build RPM
+
+on:
+  workflow_dispatch:
+
+
+env:
+  FAMILY_NAME: "pci-task"
+  CONTAINER_NAME: "pci-image"
+  ECS_EXEC_ROLE_ARN: "arn:aws:iam::329292974512:role/ecsTaskExecutionRole"
+  ECS_TASK_ROLE_ARN: "arn:aws:iam::329292974512:role/jenkins-task-role-BNR"
+  ECS_IMAGE: "329292974512.dkr.ecr.eu-west-1.amazonaws.com/pci-image:latest"
+  BUILD_NUMBER: ${{ github.run_number }}
+  CODECOMMIT_BRANCH: "25.0.03"
+  S3_RPM_REPO: "pci-rpm-repo"
+  CODECOMMIT_REPO: "ssh://git-codecommit.eu-west-1.amazonaws.com/v1/repos/cws-ecomm-pci"
+  AWS_DEFAULT_REGION: "eu-west-1"
+
+jobs:
+  run-task:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Checkout repo
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # Step 2: Assume IAM Role
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.INFRASANDBOX_IAM_ROLE }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+
+    # Step 3: Edit JSON dynamically
+    - name: Render ECS task JSON
+      run: |
+        envsubst < task-template.json > task.json
+        echo "Rendered task.json:"
+        cat task.json

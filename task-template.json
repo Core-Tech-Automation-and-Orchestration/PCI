@@ -1,0 +1,43 @@
+{
+  "family": "${FAMILY_NAME}",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "${ECS_EXEC_ROLE_ARN}",
+  "taskRoleArn": "${ECS_TASK_ROLE_ARN}",
+  "ephemeralStorage": { "sizeInGiB": 25 },
+
+  "containerDefinitions": [
+    {
+      "name": "${CONTAINER_NAME}",
+      "essential": true,
+      "image": "${ECS_IMAGE}",
+
+      "environment": [
+        { "name": "BUILD_NUMBER", "value": "${BUILD_NUMBER}" },
+        { "name": "CODECOMMIT_BRANCH", "value": "${CODECOMMIT_BRANCH}" },
+        { "name": "S3_RPM_REPO", "value": "${S3_RPM_REPO}" },
+        { "name": "CODECOMMIT_REPO", "value": "${CODECOMMIT_REPO}" }
+      ],
+
+      "portMappings": [
+        {
+          "containerPort": 80,
+          "hostPort": 80,
+          "protocol": "tcp"
+        }
+      ],
+
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/${FAMILY_NAME}",
+          "awslogs-region": "${AWS_DEFAULT_REGION}",
+          "awslogs-stream-prefix": "ecs",
+          "awslogs-create-group": "true"
+        }
+      }
+    }
+  ]
+}
