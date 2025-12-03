@@ -4,6 +4,10 @@ on:
   workflow_dispatch:
 
 
+permissions:
+  contents: read
+  id-token: write
+
 env:
   FAMILY_NAME: "pci-task"
   CONTAINER_NAME: "pci-image"
@@ -28,7 +32,7 @@ jobs:
       uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ secrets.IAM_ROLE }}
-        role-session-name: assume-role-test
+        role-session-name: pci-task-def
         aws-region: ${{ secrets.AWS_REGION }}
         output-credentials: true
 
