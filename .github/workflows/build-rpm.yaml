@@ -1,4 +1,4 @@
-name: Build RPM
+name: Build RPM Package
 
 on:
   workflow_dispatch:
@@ -88,3 +88,10 @@ jobs:
           echo "Task failed!"
           exit 1
         fi
+
+    - name: Deregister ECS Task Definition
+      run: |
+        echo "Deregistering ECS task definition..."
+        aws ecs deregister-task-definition \
+          --task-definition ${{ env.TASK_DEF_ARN }} \
+          --region ${{ env.AWS_REGION }}
