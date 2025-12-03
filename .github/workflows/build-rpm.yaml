@@ -9,16 +9,16 @@ permissions:
   id-token: write
 
 env:
-  FAMILY_NAME: ${{ env.TASK_DEF_NAME }}
-  CONTAINER_NAME: ${{ env.CONTAINER_NAME }}
-  ECS_EXEC_ROLE_ARN: ${{ secrets.ECS_EXEC_ROLE_ARN }}
-  ECS_TASK_ROLE_ARN: ${{ secrets.ECS_TASK_ROLE_ARN }}
-  ECS_IMAGE: ${{ secrets.CODECOMMIT_BRANCH }}
-  BUILD_NUMBER: ${{ github.run_number }}
-  CODECOMMIT_BRANCH: ${{ env.CODECOMMIT_BRANCH }}
-  S3_RPM_REPO: ${{ env.S3_RPM_REPO }}
-  CODECOMMIT_REPO: ${{ env.CODECOMMIT_REPO }}
-  AWS_REGION: ${{ env.AWS_REGION }}
+  FAMILY_NAME: "${{ env.TASK_DEF_NAME }}"
+  CONTAINER_NAME: "${{ env.CONTAINER_NAME }}"
+  ECS_EXEC_ROLE_ARN: "${{ secrets.ECS_EXEC_ROLE_ARN }}"
+  ECS_TASK_ROLE_ARN: "${{ secrets.ECS_TASK_ROLE_ARN }}"
+  ECS_IMAGE: "${{ secrets.CODECOMMIT_BRANCH }}"
+  BUILD_NUMBER: "${{ github.run_number }}"
+  CODECOMMIT_BRANCH: "${{ env.CODECOMMIT_BRANCH }}"
+  S3_RPM_REPO: "${{ env.S3_RPM_REPO }}"
+  CODECOMMIT_REPO: "${{ env.CODECOMMIT_REPO }}"
+  AWS_REGION: "${{ env.AWS_REGION }}"
 
 jobs:
   pci-build-package:
