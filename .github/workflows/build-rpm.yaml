@@ -13,7 +13,7 @@ env:
   CONTAINER_NAME: "${{ vars.CONTAINER_NAME }}"
   ECS_EXEC_ROLE_ARN: "${{ secrets.ECS_EXEC_ROLE_ARN }}"
   ECS_TASK_ROLE_ARN: "${{ secrets.ECS_TASK_ROLE_ARN }}"
-  ECS_IMAGE: "${{ secrets.CODECOMMIT_BRANCH }}"
+  ECS_IMAGE: "${{ secrets.ECS_IMAGE }}"
   BUILD_NUMBER: "${{ github.run_number }}"
   CODECOMMIT_BRANCH: "${{ vars.CODECOMMIT_BRANCH }}"
   S3_RPM_REPO: "${{ vars.S3_RPM_REPO }}"
