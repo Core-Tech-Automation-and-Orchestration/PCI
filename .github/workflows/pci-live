@@ -1,0 +1,167 @@
+name: PCI-Live - Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_version:
+        description: "Select RPM version to deploy"
+        required: true
+        type: choice
+        options:
+          - 26.01.01-37
+          - 25.03.02_dev-36
+          - 25.03.02_dev-35
+          - 24.09.01-34
+          - 24.09.01-33
+          - 24.09.01-31
+          - 24.09.01-30
+          - 24.09.01-29
+          - 24.09.01-28
+          - 24.09.01-27
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy-instance-1:
+    name: Deploy PCI-Live Instance 1
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.IAM_ROLE }}
+          role-session-name: pci_live_actions_1
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deregister target
+        run: |
+          aws elbv2 deregister-targets \
+            --target-group-arn "${{ vars.PCI_LIVE_TARGET_GROUP_ARN }}" \
+            --targets "Id=${{ vars.PCI_LIVE_INSTANCE_ID_1 }},Port=80"
+
+          aws elbv2 wait target-deregistered \
+            --target-group-arn "${{ vars.PCI_LIVE_TARGET_GROUP_ARN }}" \
+            --targets "Id=${{ vars.PCI_LIVE_INSTANCE_ID_1 }},Port=80"
+
+      - name: Deploy RPM
+        id: deploy
+        run: |
+          INSTANCE_ID=${{ vars.PCI_LIVE_INSTANCE_ID_1 }}
+
+          COMMAND_ID=$(aws ssm send-command \
+            --document-name "AWS-RunShellScript" \
+            --targets "Key=InstanceIds,Values=$INSTANCE_ID" \
+            --parameters commands='#!/bin/bash
+              set -e
+              sudo yum clean all
+              sudo yum check-update || true
+              sudo yum -y remove cup-cws || true
+              sudo yum -y install cup-cws-${{ github.event.inputs.deploy_version }}' \
+            --query "Command.CommandId" \
+            --output text)
+
+          echo "command_id=$COMMAND_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Wait & Fetch Logs
+        run: |
+          INSTANCE_ID=${{ vars.PCI_LIVE_INSTANCE_ID_1 }}
+          COMMAND_ID=${{ steps.deploy.outputs.command_id }}
+
+          STATUS="InProgress"
+          while [[ "$STATUS" == "InProgress" || "$STATUS" == "Pending" ]]; do
+            sleep 5
+            STATUS=$(aws ssm list-commands \
+              --command-id "$COMMAND_ID" \
+              --query "Commands[0].Status" \
+              --output text)
+          done
+
+          [[ "$STATUS" == "Success" ]]
+
+      - name: Register target back
+        run: |
+          aws elbv2 register-targets \
+            --target-group-arn "${{ vars.PCI_LIVE_TARGET_GROUP_ARN }}" \
+            --targets "Id=${{ vars.PCI_LIVE_INSTANCE_ID_1 }},Port=80"
+
+          aws elbv2 wait target-in-service \
+            --target-group-arn "${{ vars.PCI_LIVE_TARGET_GROUP_ARN }}" \
+            --targets "Id=${{ vars.PCI_LIVE_INSTANCE_ID_1 }},Port=80"
+
+########################################
+# INSTANCE 2
+########################################
+  deploy-instance-2:
+    name: Deploy PCI-Live Instance 2
+    runs-on: ubuntu-latest
+    needs: deploy-instance-1
+    environment:
+      name: production
+
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.IAM_ROLE }}
+          role-session-name: pci_live_actions_2
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deregister target
+        run: |
+          aws elbv2 deregister-targets \
+            --target-group-arn "${{ vars.PCI_LIVE_TARGET_GROUP_ARN }}" \
+            --targets "Id=${{ vars.PCI_LIVE_INSTANCE_ID_2 }},Port=80"
+
+          aws elbv2 wait target-deregistered \
+            --target-group-arn "${{ vars.PCI_LIVE_TARGET_GROUP_ARN }}" \
+            --targets "Id=${{ vars.PCI_LIVE_INSTANCE_ID_2 }},Port=80"
+
+      - name: Deploy RPM
+        id: deploy
+        run: |
+          INSTANCE_ID=${{ vars.PCI_LIVE_INSTANCE_ID_2 }}
+
+          COMMAND_ID=$(aws ssm send-command \
+            --document-name "AWS-RunShellScript" \
+            --targets "Key=InstanceIds,Values=$INSTANCE_ID" \
+            --parameters commands='#!/bin/bash
+              set -e
+              sudo yum clean all
+              sudo yum check-update || true
+              sudo yum -y remove cup-cws || true
+              sudo yum -y install cup-cws-${{ github.event.inputs.deploy_version }}' \
+            --query "Command.CommandId" \
+            --output text)
+
+          echo "command_id=$COMMAND_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for Completion
+        run: |
+          INSTANCE_ID=${{ vars.PCI_LIVE_INSTANCE_ID_2 }}
+          COMMAND_ID=${{ steps.deploy.outputs.command_id }}
+
+          STATUS="InProgress"
+          while [[ "$STATUS" == "InProgress" || "$STATUS" == "Pending" ]]; do
+            sleep 5
+            STATUS=$(aws ssm list-commands \
+              --command-id "$COMMAND_ID" \
+              --query "Commands[0].Status" \
+              --output text)
+          done
+
+          [[ "$STATUS" == "Success" ]]
+
+      - name: Register target back
+        run: |
+          aws elbv2 register-targets \
+            --target-group-arn "${{ vars.PCI_LIVE_TARGET_GROUP_ARN }}" \
+            --targets "Id=${{ vars.PCI_LIVE_INSTANCE_ID_2 }},Port=80"
+
+          aws elbv2 wait target-in-service \
+            --target-group-arn "${{ vars.PCI_LIVE_TARGET_GROUP_ARN }}" \
+            --targets "Id=${{ vars.PCI_LIVE_INSTANCE_ID_2 }},Port=80"
