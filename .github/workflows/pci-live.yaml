@@ -56,11 +56,12 @@ jobs:
         COMMAND_ID=$(aws ssm send-command \
           --document-name "AWS-RunShellScript" \
           --targets "Key=InstanceIds,Values=$INSTANCE_ID" \
-            echo Running multiple commands
-            sudo yum clean all
-            sudo yum check-update
-            sudo yum -y remove cup-ecomm-greenzone
-            sudo yum -y install cup-ecomm-greenzone-${{ github.event.inputs.deploy_version }}' \
+          --parameters commands='#!/bin/bash
+              echo Running multiple commands
+              sudo yum clean all
+              sudo yum check-update
+              sudo yum -y remove cup-ecomm-greenzone
+              sudo yum -y install cup-ecomm-greenzone-${{ github.event.inputs.deploy_version }}' \
           --query "Command.CommandId" \
           --region ${{ secrets.AWS_REGION }} \
           --output text)
