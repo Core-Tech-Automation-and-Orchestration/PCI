@@ -8,7 +8,7 @@ on:
         required: true
         type: choice
         options:
-          - 26.01.01-37
+          - 25.0.03
           - 25.03.02_dev-36
           - 25.03.02_dev-35
           - 24.09.01-34
@@ -29,6 +29,7 @@ jobs:
       command_id: ${{ steps.send-ssm.outputs.command_id }}
       instance_id: ${{ steps.set-instance-id.outputs.instance_id }}
     runs-on: ubuntu-latest
+    environment: pci-staging
     steps:
       - name: Configure AWS Credentials
         id: creds
