@@ -54,8 +54,8 @@ jobs:
               echo Running multiple commands
               sudo yum clean all
               sudo yum check-update
-              sudo yum -y remove cup-cws
-              sudo yum -y install cup-cws-${{ github.event.inputs.deploy_version }}' \
+              sudo yum -y remove cup-ecomm-greenzone
+              sudo yum -y install cup-ecomm-greenzone-${{ github.event.inputs.deploy_version }}' \
             --region ${{ secrets.AWS_REGION }} \
             --query "Command.CommandId" \
             --output text)
