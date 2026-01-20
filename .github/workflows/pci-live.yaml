@@ -28,7 +28,7 @@ jobs:
     name: Deploy PCI-Live Instance 1
     runs-on: ubuntu-latest
     environment:
-      name: production
+      name: pci-live
 
     steps:
     - name: Configure AWS Credentials
@@ -56,13 +56,13 @@ jobs:
         COMMAND_ID=$(aws ssm send-command \
           --document-name "AWS-RunShellScript" \
           --targets "Key=InstanceIds,Values=$INSTANCE_ID" \
-          --parameters commands='#!/bin/bash
-            set -e
+            echo Running multiple commands
             sudo yum clean all
-            sudo yum check-update || true
-            sudo yum -y remove cup-ecomm-greenzone || true
+            sudo yum check-update
+            sudo yum -y remove cup-ecomm-greenzone
             sudo yum -y install cup-ecomm-greenzone-${{ github.event.inputs.deploy_version }}' \
           --query "Command.CommandId" \
+          --region ${{ secrets.AWS_REGION }} \
           --output text)
 
         echo "command_id=$COMMAND_ID" >> "$GITHUB_OUTPUT"
@@ -101,7 +101,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: deploy-instance-1
     environment:
-      name: production
+      name: pci-li
 
     steps:
     - name: Configure AWS Credentials
@@ -129,13 +129,13 @@ jobs:
         COMMAND_ID=$(aws ssm send-command \
           --document-name "AWS-RunShellScript" \
           --targets "Key=InstanceIds,Values=$INSTANCE_ID" \
-          --parameters commands='#!/bin/bash
-            set -e
+            echo Running multiple commands
             sudo yum clean all
-            sudo yum check-update || true
-            sudo yum -y remove cup-ecomm-greenzone || true
+            sudo yum check-update
+            sudo yum -y remove cup-ecomm-greenzone
             sudo yum -y install cup-ecomm-greenzone-${{ github.event.inputs.deploy_version }}' \
           --query "Command.CommandId" \
+          --region ${{ secrets.AWS_REGION }} \
           --output text)
 
         echo "command_id=$COMMAND_ID" >> "$GITHUB_OUTPUT"
