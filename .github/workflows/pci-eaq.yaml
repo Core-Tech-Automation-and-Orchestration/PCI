@@ -8,16 +8,16 @@ on:
         required: true
         type: choice
         options:
-          - 25.0.03
-          - 25.03.02_dev-36
-          - 25.03.02_dev-35
-          - 24.09.01-34
-          - 24.09.01-33
-          - 24.09.01-31
-          - 24.09.01-30
-          - 24.09.01-29
-          - 24.09.01-28
-          - 24.09.01-27
+        - 25.0.03
+        - 25.03.02_dev-36
+        - 25.03.02_dev-35
+        - 24.09.01-34
+        - 24.09.01-33
+        - 24.09.01-31
+        - 24.09.01-30
+        - 24.09.01-29
+        - 24.09.01-28
+        - 24.09.01-27
 
 permissions:
   contents: read
@@ -31,88 +31,88 @@ jobs:
       instance_id: ${{ steps.set-instance-id.outputs.instance_id }}
 
     steps:
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.IAM_ROLE }}
-          role-session-name: pci_eaq_actions
-          aws-region: ${{ secrets.AWS_REGION }}
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.IAM_ROLE }}
+        role-session-name: pci_eaq_actions
+        aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Set Instance ID as Output
-        id: set-instance-id
-        run: echo "instance_id=${{ vars.PCI_EAQ_INSTANCE_ID }}" >> "$GITHUB_OUTPUT"
+    - name: Set Instance ID as Output
+      id: set-instance-id
+      run: echo "instance_id=${{ vars.PCI_EAQ_INSTANCE_ID }}" >> "$GITHUB_OUTPUT"
 
-      - name: Send Multi-Line Script to SSM
-        id: send-ssm
-        run: |
-          COMMAND_ID=$(aws ssm send-command \
-            --document-name "AWS-RunShellScript" \
-            --targets '[{"Key":"InstanceIds","Values":["${{ vars.PCI_EAQ_INSTANCE_ID }}"]}]' \
-            --parameters commands='#!/bin/bash
-              set -e
-              echo "Starting deployment"
-              sudo yum clean all
-              sudo yum check-update || true
-              sudo yum -y remove cup-cws || true
-              sudo yum -y install cup-cws-${{ github.event.inputs.deploy_version }}' \
-            --region ${{ secrets.AWS_REGION }} \
-            --query "Command.CommandId" \
-            --output text)
+    - name: Send Multi-Line Script to SSM
+      id: send-ssm
+      run: |
+        COMMAND_ID=$(aws ssm send-command \
+          --document-name "AWS-RunShellScript" \
+          --targets '[{"Key":"InstanceIds","Values":["${{ vars.PCI_EAQ_INSTANCE_ID }}"]}]' \
+          --parameters commands='#!/bin/bash
+            set -e
+            echo "Starting deployment"
+            sudo yum clean all
+            sudo yum check-update || true
+            sudo yum -y remove cup-ecomm-greenzone || true
+            sudo yum -y install cup-ecomm-greenzone-${{ github.event.inputs.deploy_version }}' \
+          --region ${{ secrets.AWS_REGION }} \
+          --query "Command.CommandId" \
+          --output text)
 
-          echo "command_id=$COMMAND_ID" >> "$GITHUB_OUTPUT"
+        echo "command_id=$COMMAND_ID" >> "$GITHUB_OUTPUT"
 
-      - name: Wait for Command Completion
-        run: |
-          STATUS="InProgress"
-          while [[ "$STATUS" == "InProgress" || "$STATUS" == "Pending" ]]; do
-            sleep 5
-            STATUS=$(aws ssm list-commands \
-              --command-id "${{ steps.send-ssm.outputs.command_id }}" \
-              --query "Commands[0].Status" \
-              --output text)
-            echo "Current Status: $STATUS"
-          done
-
-          if [[ "$STATUS" != "Success" ]]; then
-            echo "SSM command failed with status: $STATUS"
-            exit 1
-          fi
-
-      - name: Fetch SSM Command Logs
-        if: always()
-        run: |
-          STATUS=$(aws ssm get-command-invocation \
+    - name: Wait for Command Completion
+      run: |
+        STATUS="InProgress"
+        while [[ "$STATUS" == "InProgress" || "$STATUS" == "Pending" ]]; do
+          sleep 5
+          STATUS=$(aws ssm list-commands \
             --command-id "${{ steps.send-ssm.outputs.command_id }}" \
-            --instance-id "${{ steps.set-instance-id.outputs.instance_id }}" \
-            --query "Status" \
+            --query "Commands[0].Status" \
             --output text)
+          echo "Current Status: $STATUS"
+        done
 
-          STDOUT=$(aws ssm get-command-invocation \
-            --command-id "${{ steps.send-ssm.outputs.command_id }}" \
-            --instance-id "${{ steps.set-instance-id.outputs.instance_id }}" \
-            --query "StandardOutputContent" \
-            --output text)
+        if [[ "$STATUS" != "Success" ]]; then
+          echo "SSM command failed with status: $STATUS"
+          exit 1
+        fi
 
-          STDERR=$(aws ssm get-command-invocation \
-            --command-id "${{ steps.send-ssm.outputs.command_id }}" \
-            --instance-id "${{ steps.set-instance-id.outputs.instance_id }}" \
-            --query "StandardErrorContent" \
-            --output text)
+    - name: Fetch SSM Command Logs
+      if: always()
+      run: |
+        STATUS=$(aws ssm get-command-invocation \
+          --command-id "${{ steps.send-ssm.outputs.command_id }}" \
+          --instance-id "${{ steps.set-instance-id.outputs.instance_id }}" \
+          --query "Status" \
+          --output text)
 
-          {
-            echo "## SSM Command Logs"
-            echo "**Environment:** PCI-EAQ"
-            echo "**Command ID:** ${{ steps.send-ssm.outputs.command_id }}"
-            echo "**Status:** $STATUS"
-            echo "**Deploy Version:** ${{ github.event.inputs.deploy_version }}"
-            echo ""
-            echo "### Standard Output"
-            echo '```'
-            echo "$STDOUT"
-            echo '```'
-            echo ""
-            echo "### Standard Error"
-            echo '```'
-            echo "$STDERR"
-            echo '```'
-          } >> $GITHUB_STEP_SUMMARY
+        STDOUT=$(aws ssm get-command-invocation \
+          --command-id "${{ steps.send-ssm.outputs.command_id }}" \
+          --instance-id "${{ steps.set-instance-id.outputs.instance_id }}" \
+          --query "StandardOutputContent" \
+          --output text)
+
+        STDERR=$(aws ssm get-command-invocation \
+          --command-id "${{ steps.send-ssm.outputs.command_id }}" \
+          --instance-id "${{ steps.set-instance-id.outputs.instance_id }}" \
+          --query "StandardErrorContent" \
+          --output text)
+
+        {
+          echo "## SSM Command Logs"
+          echo "**Environment:** PCI-EAQ"
+          echo "**Command ID:** ${{ steps.send-ssm.outputs.command_id }}"
+          echo "**Status:** $STATUS"
+          echo "**Deploy Version:** ${{ github.event.inputs.deploy_version }}"
+          echo ""
+          echo "### Standard Output"
+          echo '```'
+          echo "$STDOUT"
+          echo '```'
+          echo ""
+          echo "### Standard Error"
+          echo '```'
+          echo "$STDERR"
+          echo '```'
+        } >> $GITHUB_STEP_SUMMARY
