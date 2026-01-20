@@ -26,6 +26,7 @@ permissions:
 jobs:
   PCI_ERT:
     runs-on: ubuntu-latest
+    environment: pci-ert
     outputs:
       command_id: ${{ steps.send-ssm.outputs.command_id }}
       instance_id: ${{ steps.set-instance-id.outputs.instance_id }}
