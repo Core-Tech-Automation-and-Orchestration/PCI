@@ -8,6 +8,7 @@ on:
         required: true
         type: choice
         options:
+          - 25.0.03-14
           - 25.0.03-13
           - 25.0.03-12
           - 25.0.03-11
@@ -17,7 +18,6 @@ on:
           - 25.0.03-4
           - 25.0.03-3
           - 25.0.03-55
-          - 25.0.03-52
           
 permissions:
   contents: read
