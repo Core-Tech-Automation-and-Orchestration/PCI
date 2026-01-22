@@ -1,0 +1,78 @@
+name: Update Versions File
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Build RPM Package"]
+    types:
+      - completed
+
+permissions:
+  contents: write
+  id-token: write
+  actions: read
+
+jobs:
+  update-versions:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Main Branch
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.ACTIONS_PAT }}
+          ref: main
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.IAM_ROLE }}
+          role-session-name: pci-rpm-updaterepo
+          aws-region: ${{ secrets.AWS_REGION }}
+          output-credentials: true
+
+      - name: Clean and regenerate versions.json from S3
+        run: |
+          set -e
+          echo "Cleaning old versions.json (if exists)..."
+          rm -f .github/versions.json versions.txt
+
+          echo "Fetching RPM list from S3 (sorted by last modified)..."
+          aws s3 ls s3://pci-rpm-repo/ --recursive | grep '\.rpm$' \
+            | sort -k1,2r \
+            | awk '{print $4}' \
+            | sed -E 's/.*cup-ecomm-greenzone-([A-Za-z0-9._-]+)\.noarch\.rpm/\1/' > versions.txt
+
+          echo "Generating new versions.json (most recent first)..."
+          echo '{ "versions": [' > .github/versions.json
+          awk '{printf "  \"%s\",\n", $0}' versions.txt | sed '$ s/,$//' >> .github/versions.json
+          echo ']}' >> .github/versions.json
+
+          echo "Generated version list (latest first):"
+          cat .github/versions.json
+
+      - name: Upload versions.json Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: versions-file
+          path: .github/versions.json
+
+      - name: Update dropdown using Python script
+        run: |
+          python3 .github/scripts/update_dropdown.py
+          
+      - name: Commit and Push to Main Branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add \
+            .github/versions.json \
+            .github/workflows/pci-eaq.yaml \
+            .github/workflows/pci-ejq.yaml \
+            .github/workflows/pci-erq.yaml \
+            .github/workflows/pci-ert.yaml \
+            .github/workflows/pci-live.yaml \
+            .github/workflows/pci-staging.yaml \
+
+          git commit -m "Update versions.json [main branch]" || echo "No changes to commit"
+          git push origin HEAD:main
