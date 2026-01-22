@@ -52,20 +52,21 @@ jobs:
       id: deploy
       run: |
         INSTANCE_ID=${{ vars.PCI_LIVE_INSTANCE_ID_1 }}
-
+    
         COMMAND_ID=$(aws ssm send-command \
           --document-name "AWS-RunShellScript" \
           --targets "Key=InstanceIds,Values=$INSTANCE_ID" \
-          --parameters commands='#!/bin/bash
-              echo Running multiple commands
-              sudo yum clean all
-              sudo yum check-update
-              sudo yum -y remove cup-ecomm-greenzone
-              sudo yum -y install cup-ecomm-greenzone-${{ github.event.inputs.deploy_version }}' \
+          --parameters 'commands=[
+            "echo Running multiple commands",
+            "sudo yum clean all",
+            "sudo yum check-update || true",
+            "sudo yum -y remove cup-ecomm-greenzone || true",
+            "sudo yum -y install cup-ecomm-greenzone-${{ github.event.inputs.deploy_version }}"
+          ]' \
           --query "Command.CommandId" \
-          --region ${{ secrets.AWS_REGION }} \
+          --region "${{ vars.AWS_REGION }}" \
           --output text)
-
+    
         echo "command_id=$COMMAND_ID" >> "$GITHUB_OUTPUT"
 
     - name: Wait & Fetch Logs
@@ -130,15 +131,17 @@ jobs:
         COMMAND_ID=$(aws ssm send-command \
           --document-name "AWS-RunShellScript" \
           --targets "Key=InstanceIds,Values=$INSTANCE_ID" \
-            echo Running multiple commands
-            sudo yum clean all
-            sudo yum check-update
-            sudo yum -y remove cup-ecomm-greenzone
-            sudo yum -y install cup-ecomm-greenzone-${{ github.event.inputs.deploy_version }}' \
+          --parameters 'commands=[
+            "echo Running multiple commands",
+            "sudo yum clean all",
+            "sudo yum check-update || true",
+            "sudo yum -y remove cup-ecomm-greenzone || true",
+            "sudo yum -y install cup-ecomm-greenzone-${{ github.event.inputs.deploy_version }}"
+          ]' \
           --query "Command.CommandId" \
-          --region ${{ secrets.AWS_REGION }} \
+          --region "${{ vars.AWS_REGION }}" \
           --output text)
-
+    
         echo "command_id=$COMMAND_ID" >> "$GITHUB_OUTPUT"
 
     - name: Wait for Completion
