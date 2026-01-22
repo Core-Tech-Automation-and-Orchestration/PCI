@@ -1,30 +1,31 @@
 import os
 import openai
 
+openai.api_key = os.environ["OPENAI_API_KEY"]
+
 # Read ECS logs
 with open("ecs_task_logs.txt", "r") as f:
     logs = f.read()
 
-# Summarize logs using AI
-response = openai.ChatCompletion.create(
+# Summarize logs using the new OpenAI API
+response = openai.chat.completions.create(
     model="gpt-5-mini",
     messages=[
         {"role": "system", "content": "You are a helpful DevOps assistant."},
-        {"role": "user", "content": f"Summarize these ECS task logs and highlight errors or warnings:\n{logs}"}
+        {"role": "user", "content": f"Summarize these ECS task logs and highlight errors/warnings:\n{logs}"}
     ]
 )
 
-summary = response['choices'][0]['message']['content']
+summary = response.choices[0].message.content
 
-# Save summary to file
+# Save summary
 with open("log_summary.txt", "w") as f:
     f.write(summary)
 
-# Append summary to GitHub Actions summary
+# Write to GitHub Actions Summary
 github_summary = os.environ.get("GITHUB_STEP_SUMMARY", "/github/workflow/summary.md")
 with open(github_summary, "a") as f:
-    f.write("\n## ECS Task Log Summary\n")
-    f.write("```\n")
+    f.write("\n## ECS Task Log Summary\n```\n")
     f.write(summary)
     f.write("\n```\n")
 
