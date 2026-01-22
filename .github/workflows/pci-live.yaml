@@ -103,7 +103,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: deploy-instance-1
     environment:
-      name: pci-li
+      name: pci-live
 
     steps:
     - name: Configure AWS Credentials
