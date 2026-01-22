@@ -95,3 +95,35 @@ jobs:
         aws ecs deregister-task-definition \
           --task-definition ${{ env.TASK_DEF_ARN }} \
           --region ${{ env.AWS_REGION }}
+
+    - name: Fetch ECS Task Logs
+      id: fetch_logs
+      run: |
+        LOG_GROUP="/ecs/${{ env.FAMILY_NAME }}"
+        CONTAINER_NAME="${{ env.CONTAINER_NAME }}"
+        TASK_ID=$(basename ${{ env.TASK_ARN }})
+        
+        # Get log stream name
+        LOG_STREAM=$(aws logs describe-log-streams \
+          --log-group-name "$LOG_GROUP" \
+          --query "logStreams[?contains(logStreamName, '$TASK_ID')].logStreamName | [0]" \
+          --output text)
+        
+        # Get logs
+        aws logs get-log-events \
+          --log-group-name "$LOG_GROUP" \
+          --log-stream-name "$LOG_STREAM" \
+          --query 'events[*].message' \
+          --output text > ecs_task_logs.txt
+        
+        echo "Fetched logs:"
+        tail -n 20 ecs_task_logs.txt
+
+    - name: Summarize ECS Logs and Add to GitHub Summary
+      if: always()
+      run: |
+        pip install --upgrade openai
+        python scripts/summarize_logs.py
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        GITHUB_STEP_SUMMARY: ${{ github.step_summary }}
