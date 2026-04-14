@@ -18,13 +18,13 @@ jobs:
 
     steps:
       - name: Checkout Main Branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.ACTIONS_PAT }}
           ref: main
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.IAM_ROLE }}
           role-session-name: pci-rpm-updaterepo
@@ -52,7 +52,7 @@ jobs:
           cat .github/versions.json
 
       - name: Upload versions.json Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: versions-file
           path: .github/versions.json
