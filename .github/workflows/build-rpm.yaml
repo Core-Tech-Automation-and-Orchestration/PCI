@@ -119,11 +119,11 @@ jobs:
         echo "Fetched logs:"
         tail -n 20 ecs_task_logs.txt
 
-    - name: Summarize ECS Logs and Add to GitHub Summary
-      if: always()
-      run: |
-        pip install --upgrade openai
-        python .github/scripts/summarize_logs.py
-      env:
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        GITHUB_STEP_SUMMARY: ${{ github.step_summary }}
+    # - name: Summarize ECS Logs and Add to GitHub Summary
+    #   if: always()
+    #   run: |
+    #     pip install --upgrade openai
+    #     python .github/scripts/summarize_logs.py
+    #   env:
+    #     OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    #     GITHUB_STEP_SUMMARY: ${{ github.step_summary }}
